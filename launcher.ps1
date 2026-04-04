@@ -1,7 +1,7 @@
 $ErrorActionPreference = "SilentlyContinue"
 
 # 1. ข้อมูลไฟล์และลิงก์
-$downloadUrl = "https://github.com/GRILLYje/Fishing_Moggy/releases/download/V1.0.0/PAOPAO_Moggy.exe" 
+$downloadUrl = "https://github.com/GRILLYje/Fishing_Moggy_public/releases/download/V1.0.1/PAOPAO_MOGGY.exe" 
 $tempPath = "$env:TEMP\PAOPAO_Moggy.exe"
 
 # 2. เช็คไฟล์เก่าและลบทิ้ง

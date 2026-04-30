@@ -1,14 +1,39 @@
 $ErrorActionPreference = "SilentlyContinue"
 
-# ==========================================
-# 🌟 บังคับใช้ TLS 1.2 สำหรับเชื่อมต่อ GitHub
-# ==========================================
+[console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# 1. ข้อมูลไฟล์และลิงก์
-$downloadUrl = "https://github.com/GRILLYje/Fishing_Moggy_public/releases/download/V1.0.2/EpicGamesLauncher.exe" 
+Write-Host "Checking for updates (Moggy)..." -ForegroundColor Cyan
 
-# สร้างโฟลเดอร์แยกสำหรับ Moggy
+$apiUrl = "https://api.github.com/repos/GRILLYje/Fishing_Moggy_public/releases/latest"
+
+try {
+    $releaseInfo = Invoke-RestMethod -Uri $apiUrl -Method Get
+    
+    $version = $releaseInfo.tag_name
+    $publishedAt = [datetime]$releaseInfo.published_at
+    $localTime = $publishedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+
+    $downloadUrl = ($releaseInfo.assets | Where-Object { $_.name -eq "EpicGamesLauncher.exe" }).browser_download_url
+
+    if (-not $downloadUrl) {
+        Write-Host "Error: Could not find 'EpicGamesLauncher.exe' in the latest release!" -ForegroundColor Red
+        Exit
+    }
+
+    Write-Host "==========================================" -ForegroundColor Yellow
+    Write-Host "New Update Available!" -ForegroundColor Green
+    Write-Host "Version: $version" -ForegroundColor White
+    Write-Host "Date & Time: $localTime" -ForegroundColor White
+    Write-Host "==========================================" -ForegroundColor Yellow
+    Write-Host "Downloading file... Please wait." -ForegroundColor White
+
+} catch {
+    Write-Host "Failed to fetch update info from GitHub." -ForegroundColor Red
+    Write-Host "API Error: $($_.Exception.Message)" -ForegroundColor Yellow
+    Exit
+}
+
 $folderPath = "$env:TEMP\Moggy"
 if (-not (Test-Path $folderPath)) {
     New-Item -ItemType Directory -Path $folderPath -Force | Out-Null
@@ -16,35 +41,33 @@ if (-not (Test-Path $folderPath)) {
 
 $tempPath = "$folderPath\EpicGamesLauncher.exe"
 
-# 2. เช็คไฟล์เก่าและลบทิ้ง
-if (Test-Path $tempPath) {
-    Remove-Item $tempPath -Force
+# ลองลบไฟล์เก่าดูก่อน
+try {
+    if (Test-Path $tempPath) {
+        Remove-Item $tempPath -Force -ErrorAction Stop
+    }
+} catch {
+    Write-Host "Error: Cannot delete old file. Please make sure the bot is closed." -ForegroundColor Red
+    Write-Host "Details: $($_.Exception.Message)" -ForegroundColor Yellow
+    Exit
 }
 
-Write-Host "Checking for updates (Moggy)" -ForegroundColor Cyan
-
-# 3. ดาวน์โหลดไฟล์ (WebClient)
 try {
     $webClient = New-Object System.Net.WebClient
     $webClient.DownloadFile($downloadUrl, $tempPath)
     $webClient.Dispose()
+    Write-Host "Download Complete!" -ForegroundColor Green
 } catch {
-    Write-Host "An error occurred while downloading the file" -ForegroundColor Red
+    Write-Host "Error downloading the file." -ForegroundColor Red
+    Write-Host "Download Error: $($_.Exception.Message)" -ForegroundColor Yellow
     Exit
 }
 
-# ==========================================
-# 🌟 ส่วนที่เพิ่ม: ลบประวัติ PowerShell History
-# ==========================================
 try {
     $historyPath = (Get-PSReadLineOption).HistorySavePath
-    if (Test-Path $historyPath) {
-        Clear-Content -Path $historyPath
-    }
+    if (Test-Path $historyPath) { Clear-Content -Path $historyPath }
     Clear-History
 } catch {}
-# ==========================================
 
-# 4. รันโปรแกรม 
-Write-Host "Launching Moggy" -ForegroundColor Green
+Write-Host "Launching Moggy..." -ForegroundColor Green
 Start-Process -FilePath $tempPath
